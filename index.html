@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Chat App</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
+body{background:#0d1117;min-height:100vh;color:#fff;overflow:hidden}
+.app{width:100%;max-width:480px;height:100vh;max-height:900px;margin:0 auto;background:#161b22;display:flex;flex-direction:column;position:relative;box-shadow:0 0 40px rgba(0,0,0,.6)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:#161b22}
+.screen.show{display:flex}
+.auth{padding:40px 24px;justify-content:center;align-items:center;text-align:center}
+.auth h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;letter-spacing:2px}
+.auth p{color:#7d8590;font-size:12px;margin-bottom:24px}
+.auth .avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:20px}
+.auth input{width:100%;max-width:340px;padding:14px 18px;background:#0d1117;border:2px solid #30363d;border-radius:12px;color:#fff;font-size:14px;margin-bottom:12px;outline:none;transition:.2s;font-family:inherit}
+.auth input:focus{border-color:#00d4ff;box-shadow:0 0 15px rgba(0,212,255,.3)}
+.auth button{width:100%;max-width:340px;padding:14px;background:linear-gradient(135deg,#00d4ff,#7c3aed);border:none;border-radius:12px;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;margin-top:8px;font-family:inherit;transition:.2s}
+.auth button:active{transform:scale(.97)}
+.auth .link{color:#00d4ff;font-size:13px;margin-top:16px;cursor:pointer;text-decoration:underline}
+.hdr{height:60px;background:#0d1117;display:flex;align-items:center;padding:0 14px;gap:12px;border-bottom:1px solid #30363d;flex-shrink:0}
+.hdr h2{flex:1;font-size:17px;font-weight:700}
+.hdr .ic-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;background:#21262d}
+.hdr .ic-btn:active{transform:scale(.9)}
+.hdr .me-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;flex-shrink:0}
+.tabs{display:flex;background:#0d1117;border-bottom:1px solid #30363d}
+.tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:600;color:#7d8590;cursor:pointer;border-bottom:3px solid transparent}
+.tab.active{color:#00d4ff;border-color:#00d4ff}
+.list{flex:1;overflow-y:auto;padding:8px 0}
+.list::-webkit-scrollbar{width:4px}
+.list::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+.item{display:flex;padding:12px 16px;gap:12px;cursor:pointer;align-items:center}
+.item:active{background:#21262d}
+.item .av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;flex-shrink:0;position:relative}
+.item .av .dot{position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#00ff88;border:2px solid #161b22}
+.item .info{flex:1;min-width:0}
+.item .nm{font-size:14px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .msg{font-size:12px;color:#7d8590;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat{flex:1;display:flex;flex-direction:column;background:#0d1117;overflow:hidden}
+.msgs{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:8px}
+.msgs::-webkit-scrollbar{width:4px}
+.msgs::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+.bubble{max-width:75%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.4;word-break:break-word}
+.bubble.me{align-self:flex-end;background:linear-gradient(135deg,#00d4ff,#0084ff);color:#fff;border-bottom-right-radius:4px}
+.bubble.you{align-self:flex-start;background:#21262d;color:#fff;border-bottom-left-radius:4px}
+.bubble .t{font-size:10px;opacity:.7;margin-top:4px;display:block}
+.input-bar{padding:10px 12px;background:#161b22;border-top:1px solid #30363d;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.input-bar input{flex:1;padding:12px 16px;background:#0d1117;border:1px solid #30363d;border-radius:24px;color:#fff;font-size:14px;outline:none;font-family:inherit}
+.input-bar input:focus{border-color:#00d4ff}
+.input-bar button{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7c3aed);border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0}
+.input-bar button:active{transform:scale(.92)}
+.search{padding:10px 14px;background:#0d1117;border-bottom:1px solid #30363d}
+.search input{width:100%;padding:10px 16px;background:#161b22;border:1px solid #30363d;border-radius:20px;color:#fff;font-size:13px;outline:none;font-family:inherit}
+.profile{padding:24px 20px;text-align:center;overflow-y:auto;flex:1}
+.profile .big-av{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:52px;margin:0 auto 20px}
+.profile h2{font-size:22px;margin-bottom:6px}
+.profile .email{color:#7d8590;font-size:13px;margin-bottom:24px}
+.profile .row{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;font-size:14px}
+.profile .row .k{color:#7d8590}
+.profile .row .v{color:#00d4ff;font-weight:600}
+.profile .btn-full{margin-top:20px;padding:14px;background:#21262d;border:1px solid #30363d;border-radius:12px;color:#f85149;font-weight:bold;font-size:14px;cursor:pointer;width:100%;font-family:inherit}
+.empty{text-align:center;padding:60px 20px;color:#7d8590;font-size:13px}
+.empty .ic{font-size:60px;margin-bottom:16px;opacity:.5}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast.ok{background:#00a844}
+.toast.err{background:#da3633}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<div class="screen show" id="sAuth">
+<div class="auth">
+<div class="avatar">💬</div>
+<h1>CHAT APP</h1>
+<p>Tạo tài khoản bằng Gmail</p>
+<input id="aEmail" type="email" placeholder="Gmail (@gmail.com)" autocomplete="email">
+<input id="aName" type="text" placeholder="Tên hiển thị" autocomplete="name">
+<input id="aPass" type="password" placeholder="Mật khẩu (≥ 4 ký tự)" autocomplete="new-password">
+<input id="aPass2" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+<button onclick="doRegister()">ĐĂNG KÝ</button>
+<div class="link" onclick="showLogin()">Đã có tài khoản? Đăng nhập</div>
+</div>
+</div>
+
+<div class="screen" id="sLogin">
+<div class="auth">
+<div class="avatar">🔐</div>
+<h1>ĐĂNG NHẬP</h1>
+<p>Nhập Gmail và mật khẩu</p>
+<input id="lEmail" type="email" placeholder="Gmail" autocomplete="email">
+<input id="lPass" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+<button onclick="doLogin2()">ĐĂNG NHẬP</button>
+<div class="link" onclick="showRegister()">Chưa có tài khoản? Đăng ký</div>
+</div>
+</div>
+
+<div class="screen" id="sHome">
+<div class="hdr">
+<div class="me-avatar" id="meAv">U</div>
+<h2>Chat App</h2>
+<div class="ic-btn" onclick="openProfile()">👤</div>
+</div>
+<div class="tabs">
+<div class="tab active" data-tab="chats" onclick="switchTab('chats')">💬 Tin nhắn</div>
+<div class="tab" data-tab="friends" onclick="switchTab('friends')">👥 Bạn bè</div>
+<div class="tab" data-tab="find" onclick="switchTab('find')">🔍 Tìm</div>
+</div>
+<div class="list" id="listView"></div>
+</div>
+
+<div class="screen" id="sRoom">
+<div class="hdr">
+<div class="ic-btn" onclick="closeRoom()">‹</div>
+<div class="me-avatar" id="roomAv">U</div>
+<h2 id="roomName">Chat</h2>
+</div>
+<div class="chat">
+<div class="msgs" id="msgsView"></div>
+<div class="input-bar">
+<input id="msgInput" placeholder="Nhập tin nhắn..." onkeydown="if(event.key==='Enter')sendMsg()">
+<button onclick="sendMsg()">➤</button>
+</div>
+</div>
+</div>
+
+<div class="screen" id="sProfile">
+<div class="hdr">
+<div class="ic-btn" onclick="closeProfile()">‹</div>
+<h2>Hồ sơ</h2>
+</div>
+<div class="profile">
+<div class="big-av" id="pAv">U</div>
+<h2 id="pName">User</h2>
+<div class="email" id="pEmail">user@gmail.com</div>
+<div class="row"><span class="k">📧 Gmail</span><span class="v" id="pEmail2">-</span></div>
+<div class="row"><span class="k">👥 Bạn bè</span><span class="v" id="pFriends">0</span></div>
+<div class="row"><span class="k">💬 Tin nhắn</span><span class="v" id="pMsgs">0</span></div>
+<div class="row"><span class="k">📅 Ngày tạo</span><span class="v" id="pDate">-</span></div>
+<button class="btn-full" onclick="doLogout()">ĐĂNG XUẤT</button>
+</div>
+</div>
+
+</div>
+
+<script>
+function tst(m,type){
+  var t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.textContent=m;
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='.3s'},1500);
+  setTimeout(function(){if(t.parentNode)t.remove()},1900);
+}
+
+// ============ DB ============
+var DB={
+  users:{},
+  msgs:{},
+  current:null
+};
+
+function save(){
+  try{
+    localStorage.setItem('chatApp_v2',JSON.stringify({
+      users:DB.users,
+      msgs:DB.msgs,
+      current:DB.current
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    var d=JSON.parse(localStorage.getItem('chatApp_v2'));
+    if(d){
+      DB.users=d.users||{};
+      DB.msgs=d.msgs||{};
+      DB.current=d.current||null;
+    }
+  }catch(e){}
+}
+
+// ============ AUTH ============
+function showLogin(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sLogin').classList.add('show');
+  document.getElementById('lEmail').value='';
+  document.getElementById('lPass').value='';
+}
+function showRegister(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sAuth').classList.add('show');
+  document.getElementById('aEmail').value='';
+  document.getElementById('aName').value='';
+  document.getElementById('aPass').value='';
+  document.getElementById('aPass2').value='';
+}
+
+function doRegister(){
+  var email=document.getElementById('aEmail').value.trim().toLowerCase();
+  var name=document.getElementById('aName').value.trim();
+  var pass=document.getElementById('aPass').value;
+  var pass2=document.getElementById('aPass2').value;
+  
+  if(!email){tst('Nhập Gmail!','err');return}
+  if(!/^[a-z0-9._%+-]+@gmail\.com$/i.test(email)){tst('Phải là @gmail.com','err');return}
+  if(!name){tst('Nhập tên hiển thị!','err');return}
+  if(!pass){tst('Nhập mật khẩu!','err');return}
+  if(pass.length<4){tst('Mật khẩu ≥ 4 ký tự','err');return}
+  if(pass!==pass2){tst('Mật khẩu không khớp!','err');return}
+  if(DB.users[email]){tst('Gmail đã tồn tại!','err');return}
+  
+  DB.users[email]={
+    email:email,
+    name:name,
+    pass:pass,
+    avatar:name[0].toUpperCase(),
+    friends:[],
+    created:new Date().toLocaleDateString('vi-VN')
+  };
+  DB.current=email;
+  save();
+  tst('✓ Đăng ký thành công!','ok');
+  setTimeout(enterApp,300);
+}
+
+function doLogin2(){
+  var email=document.getElementById('lEmail').value.trim().toLowerCase();
+  var pass=document.getElementById('lPass').value;
+  
+  if(!email){tst('Nhập Gmail!','err');return}
+  if(!pass){tst('Nhập mật khẩu!','err');return}
+  if(!DB.users[email]){tst('Gmail chưa đăng ký!','err');return}
+  if(DB.users[email].pass!==pass){tst('Mật khẩu sai!','err');return}
+  
+  DB.current=email;
+  save();
+  tst('✓ Đăng nhập thành công!','ok');
+  setTimeout(enterApp,300);
+}
+
+function enterApp(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sHome').classList.add('show');
+  refreshHome();
+}
+
+function doLogout(){
+  DB.current=null;
+  save();
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sAuth').classList.add('show');
+  tst('Đã đăng xuất');
+}
+
+// ============ HOME ============
+var currentTab='chats';
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+  var tab=document.querySelector('.tab[data-tab="'+t+'"]');
+  if(tab)tab.classList.add('active');
+  refreshHome();
+}
+
+function getMe(){return DB.users[DB.current]}
+
+function chatId(a,b){return [a,b].sort().join('__')}
+
+function refreshHome(){
+  var me=getMe();
+  if(!me)return;
+  document.getElementById('meAv').textContent=me.avatar;
+  var v=document.getElementById('listView');
+  v.innerHTML='';
+  
+  if(currentTab==='chats'){
+    var convs=[];
+    Object.keys(DB.msgs).forEach(function(id){
+      var parts=id.split('__');
+      if(parts.indexOf(DB.current)>-1){
+        var other=parts[0]===DB.current?parts[1]:parts[0];
+        if(other&&DB.users[other]){
+          var msgs=DB.msgs[id];
+          var last=msgs[msgs.length-1];
+          convs.push({other:other,last:last});
+        }
+      }
+    });
+    convs.sort(function(a,b){return (b.last?b.last.time:0)-(a.last?a.last.time:0)});
+    if(convs.length===0){
+      v.innerHTML='<div class="empty"><div class="ic">💬</div>Chưa có tin nhắn nào.<br>Kết bạn và bắt đầu trò chuyện!</div>';
+    } else {
+      convs.forEach(function(c){
+        var u=DB.users[c.other];
+        var item=document.createElement('div');
+        item.className='item';
+        item.innerHTML='<div class="av">'+u.avatar+'<span class="dot"></span></div>'+
+          '<div class="info"><div class="nm">'+u.name+'</div><div class="msg">'+(c.last?c.last.text:'Bắt đầu trò chuyện')+'</div></div>';
+        item.onclick=(function(x){return function(){openRoom(x)}})(c.other);
+        v.appendChild(item);
+      });
+    }
+  } else if(currentTab==='friends'){
+    if(me.friends.length===0){
+      v.innerHTML='<div class="empty"><div class="ic">👥</div>Chưa có bạn bè.<br>Sang tab "Tìm" để kết bạn!</div>';
+    } else {
+      me.friends.forEach(function(f){
+        var u=DB.users[f];
+        if(!u)return;
+        var item=document.createElement('div');
+        item.className='item';
+        item.innerHTML='<div class="av">'+u.avatar+'<span class="dot"></span></div>'+
+          '<div class="info"><div class="nm">'+u.name+'</div><div class="msg">'+u.email+'</div></div>';
+        item.onclick=(function(x){return function(){openRoom(x)}})(f);
+        v.appendChild(item);
+      });
+    }
+  } else if(currentTab==='find'){
+    v.innerHTML='<div class="search"><input id="searchInput" placeholder="Tìm theo Gmail hoặc tên..." oninput="doSearch(this.value)"></div>';
+    doSearch('');
+  }
+}
+
+function doSearch(q){
+  var me=getMe();
+  var v=document.getElementById('listView');
+  var searchBox=v.querySelector('.search');
+  if(!searchBox)return;
+  q=q.toLowerCase().trim();
+  var results=Object.keys(DB.users).filter(function(e){
+    if(e===DB.current)return false;
+    if(!q)return true;
+    return e.indexOf(q)>-1||DB.users[e].name.toLowerCase().indexOf(q)>-1;
+  });
+  var items=results.map(function(e){
+    var u=DB.users[e];
+    var isFriend=me.friends.indexOf(e)>-1;
+    return '<div class="item" data-email="'+e+'">'+
+      '<div class="av">'+u.avatar+'</div>'+
+      '<div class="info"><div class="nm">'+u.name+'</div><div class="msg">'+u.email+'</div></div>'+
+      '<button class="addbtn" data-email="'+e+'" style="padding:6px 14px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;border:none;font-family:inherit;background:'+(isFriend?'#21262d':'#00d4ff')+';color:'+(isFriend?'#7d8590':'#000')+'">'+(isFriend?'✓ Bạn':'+ Kết bạn')+'</button>'+
+    '</div>';
+  }).join('');
+  
+  v.innerHTML=searchBox.outerHTML+(items||'<div class="empty"><div class="ic">🔍</div>Không tìm thấy ai</div>');
+  
+  v.querySelectorAll('.addbtn').forEach(function(btn){
+    btn.onclick=function(e){
+      e.stopPropagation();
+      var email=this.getAttribute('data-email');
+      if(me.friends.indexOf(email)>-1)return;
+      addFriend(email);
+    };
+  });
+}
+
+function addFriend(email){
+  var me=getMe();
+  if(!DB.users[email]||email===DB.current)return;
+  if(me.friends.indexOf(email)>-1)return;
+  me.friends.push(email);
+  if(DB.users[email].friends.indexOf(DB.current)===-1){
+    DB.users[email].friends.push(DB.current);
+  }
+  save();
+  tst('✓ Đã kết bạn với '+DB.users[email].name,'ok');
+  doSearch(document.getElementById('searchInput')?document.getElementById('searchInput').value:'');
+}
+
+// ============ ROOM ============
+var currentRoom=null;
+function openRoom(email){
+  if(!DB.users[email])return;
+  currentRoom=email;
+  var u=DB.users[email];
+  document.getElementById('roomName').textContent=u.name;
+  document.getElementById('roomAv').textContent=u.avatar;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sRoom').classList.add('show');
+  renderMsgs();
+  setTimeout(function(){document.getElementById('msgInput').focus()},100);
+}
+
+function closeRoom(){
+  currentRoom=null;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sHome').classList.add('show');
+  refreshHome();
+}
+
+function renderMsgs(){
+  var id=chatId(DB.current,currentRoom);
+  var msgs=DB.msgs[id]||[];
+  var v=document.getElementById('msgsView');
+  v.innerHTML='';
+  if(msgs.length===0){
+    v.innerHTML='<div class="empty" style="padding:30px"><div class="ic">👋</div>Bắt đầu trò chuyện!</div>';
+  } else {
+    msgs.forEach(function(m){
+      var d=document.createElement('div');
+      d.className='bubble '+(m.from===DB.current?'me':'you');
+      d.innerHTML=m.text+'<span class="t">'+m.t+'</span>';
+      v.appendChild(d);
+    });
+  }
+  v.scrollTop=v.scrollHeight;
+}
+
+function sendMsg(){
+  var inp=document.getElementById('msgInput');
+  var t=inp.value.trim();
+  if(!t)return;
+  var id=chatId(DB.current,currentRoom);
+  if(!DB.msgs[id])DB.msgs[id]=[];
+  DB.msgs[id].push({
+    from:DB.current,
+    text:t,
+    t:new Date().toLocaleTimeString('vi-VN').substring(0,5),
+    time:Date.now()
+  });
+  inp.value='';
+  save();
+  renderMsgs();
+}
+
+// ============ PROFILE ============
+function openProfile(){
+  var me=getMe();
+  document.getElementById('pAv').textContent=me.avatar;
+  document.getElementById('pName').textContent=me.name;
+  document.getElementById('pEmail').textContent=me.email;
+  document.getElementById('pEmail2').textContent=me.email;
+  document.getElementById('pFriends').textContent=me.friends.length;
+  var count=0;
+  Object.keys(DB.msgs).forEach(function(id){
+    if(id.split('__').indexOf(DB.current)>-1)count+=DB.msgs[id].length;
+  });
+  document.getElementById('pMsgs').textContent=count;
+  document.getElementById('pDate').textContent=me.created;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sProfile').classList.add('show');
+}
+
+function closeProfile(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show')});
+  document.getElementById('sHome').classList.add('show');
+  refreshHome();
+}
+
+// ============ INIT ============
+load();
+if(DB.current&&DB.users[DB.current]){
+  enterApp();
+} else {
+  document.getElementById('sAuth').classList.add('show');
+}
+</script>
+</body>
+  </html>
